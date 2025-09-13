@@ -1,1 +1,235 @@
 
+HomeWork
+HomeWork – 
+
+package HomeWork_TQ;
+/*
+	1.There is an arraylist of song object { int song id , String songname , flaot volume } . 
+	As song objects are added into list, volume variable of current object is increased by 2 .
+	e.g. first song added will have volume 2 , second song will have volume 4 and so on.
+	But the when volume becomes divisible by 3. It gets reduced by 50% for that song
+	(current object). Again for next song onwards volume will increase by 2 and so on.
+	Find out index of atleast one song object for which volume will be equal to or greater
+	than 10 .
+	You have to accept only song id and song name from user. Volume will be set as per
+	above logic.
+	e.g. first song added – 1 , ‘all is well’ , 2
+	second song – 2 , ‘e vatan’ , 4
+	third song - 3 , ‘lakshya to’ , 6 .. now this volume is divisible by 3 so. This song’s
+	volume will be reduced by 50% so will become 3.
+	Now next song will have volume 3+2 = 5 and so on . Again when volume becomes 9
+	it will be reduced to 4.5.
+*/
+
+import java.util.ArrayList;
+import java.util.Scanner;
+class Song 
+{
+    int songId;
+    String songName;
+    float volume;
+    Song(int songId, String songName, float volume) 
+    {
+        this.songId = songId;
+        this.songName = songName;
+        this.volume = volume;
+    }
+    @Override
+    public String toString() 
+    {
+        return "[" + songId + ", " + songName + ", Volume: " + volume + "]";
+    }
+}
+public class  Question_1
+{
+    public static void main(String[] args) 
+    {
+        ArrayList<Song> songList = new ArrayList<>();
+        Scanner scanner = new Scanner(System.in);
+
+        float currentVolume = 0;
+        int indexWithVolumeAtLeast10 = -1;
+        int index = 0;
+
+        while(true) 
+        {
+            System.out.print("Enter Song ID (or -1 to stop): ");
+            int id = scanner.nextInt();
+            if(id == -1) break;
+
+            scanner.nextLine(); // consume newline
+            System.out.print("Enter Song Name: ");
+            String name = scanner.nextLine();
+
+            currentVolume += 2;
+
+            if(currentVolume % 3 == 0) 
+            {
+                currentVolume = currentVolume / 2;
+            }
+
+            Song newSong = new Song(id, name, currentVolume);
+            songList.add(newSong);
+
+            if(currentVolume >= 10 && indexWithVolumeAtLeast10 == -1) 
+            {
+                indexWithVolumeAtLeast10 = index;
+            }
+
+            index++;
+        }
+
+        System.out.println("\n--- Songs Added ---");
+        for(int i = 0; i < songList.size(); i++) 
+        {
+            System.out.println(i + ": " + songList.get(i));
+        }
+
+        	if(indexWithVolumeAtLeast10 != -1)
+        	{
+        		System.out.println("\n First index with volume >= 10 : " + indexWithVolumeAtLeast10);
+        	} 
+        	else 
+        	{
+        		System.out.println("\n No song has volume >= 10 ");
+        	}
+
+        scanner.close();
+    }
+}
+
+create database Homework;
+/*
+5. Display the customer name ,contact of customers whose account type is ‘saving’
+order by descending order of c name.
+*/
+Create Table customers (
+customer_id int primary key auto_increment,
+customer_name varchar(100),
+contact varchar(100),
+account_type varchar(50)
+);
+INSERT INTO customers (customer_id, customer_name, contact, account_type) VALUES
+('101', 'Sakshi Ugale', '8530939526', 'Current'),
+('102', 'Pratiksha Shinde', '9767499345', 'Savings'),
+('105', 'Sonam sanap', '9122939526', 'Current'),
+('106', 'Pratik Barde', '9347499345', 'Savings'),
+('103', 'Pooja Sangle', '8434546526', 'Current'),
+('104', 'Anjali Gupta', '9030539526', 'Fixed Deposit');
+select * from customers;
+select customer_name, contact
+from customers where account_type = 'Savings'
+order by customer_name DESC;
+
+/*
+6. Display bank name , total balance of all customers in that bank of all banks in
+descending order of balance.
+*/
+Create Table customer (
+bank_id int,
+bank_name varchar(100),
+bank_branch varchar(100),
+total_balance varchar(50)
+);
+
+INSERT INTO customer (bank_id, bank_name, bank_branch, total_balance) VALUES
+(201, 'kotak', 'Pune', '6045349685'),
+(202, 'Axis', 'Mumbai', '5948756675869'),
+(205, 'Baroda', 'Thane', '3459486578659804'),
+(206, 'kotak', 'Nashik', '258098455476'),
+(203, 'SBI', 'Pune', '696849584477'),
+(204, 'SBI', 'Shirdi', '5077680698048');
+
+select * from customer;
+select bank_name, sum(total_balance) as balance
+from customer group by bank_name 
+order by balance DESC;
+
+/*
+7. Update account no of customers of ‘state bank of india’ . Prefix ‘SBI’ before account
+no.
+*/
+
+UPDATE customer
+SET bank_branch = CONCAT('Kopargoan', bank_branch)
+WHERE bank_name = 'SBI';
+
+/*
+8. Create Trigger on Transaction table when transaction is done accordingly it should
+be reflected in balance of Accounts. If transaction is debit reduce the balance , for
+credit increase balance.
+*/
+
+DELIMITER //
+
+CREATE TRIGGER update_balance_after_transaction
+AFTER INSERT ON Transaction
+FOR EACH ROW
+BEGIN
+    IF NEW.type = 'debit' THEN
+        UPDATE Accounts
+        SET balance = balance - NEW.amount
+        WHERE account_no = NEW.account_no;
+    ELSEIF NEW.type = 'credit' THEN
+        UPDATE Accounts
+        SET balance = balance + NEW.amount
+        WHERE account_no = NEW.account_no;
+    END IF;
+END;
+
+//
+DELIMITER ;
+
+/*
+9. Create a collection to store acctype as key and value as list of all customers with
+respective acctype for bank name HDFC(without using joins)
+*/
+
+DECLARE
+TYPE CustomerList IS TABLE OF VARCHAR2(100) INDEX BY PLS_INTEGER;
+TYPE AccountTypeMap IS TABLE OF CustomerList INDEX BY VARCHAR2(50);
+
+acc_map AccountTypeMap;
+cust_list CustomerList;
+
+CURSOR c IS 
+    SELECT customer_name, acctype
+    FROM customers
+    WHERE bank_name = 'HDFC';
+
+v_index PLS_INTEGER;
+BEGIN
+FOR rec IN c LOOP
+    -- If this account type already has entries, add to the list
+    v_index := acc_map(rec.acctype).COUNT + 1;
+    acc_map(rec.acctype)(v_index) := rec.customer_name;
+END LOOP;
+
+-- Display the collection (optional)
+FOR acc IN acc_map.FIRST .. acc_map.LAST LOOP
+    DBMS_OUTPUT.PUT_LINE('Account Type: ' || acc);
+    FOR i IN acc_map(acc).FIRST .. acc_map(acc).LAST LOOP
+        DBMS_OUTPUT.PUT_LINE('   Customer: ' || acc_map(acc)(i));
+    END LOOP;
+END LOOP;
+END;
+
+/*
+	1.There is an arraylist of song object { int song id , String songname , flaot volume } . 
+	As song objects are added into list, volume variable of current object is increased by 2 .
+	e.g. first song added will have volume 2 , second song will have volume 4 and so on.
+	But the when volume becomes divisible by 3. It gets reduced by 50% for that song
+	(current object). Again for next song onwards volume will increase by 2 and so on.
+	Find out index of atleast one song object for which volume will be equal to or greater
+	than 10 .
+	You have to accept only song id and song name from user. Volume will be set as per
+	above logic.
+	e.g. first song added – 1 , ‘all is well’ , 2
+	second song – 2 , ‘e vatan’ , 4
+	third song - 3 , ‘lakshya to’ , 6 .. now this volume is divisible by 3 so. This song’s
+	volume will be reduced by 50% so will become 3.
+	Now next song will have volume 3+2 = 5 and so on . Again when volume becomes 9
+	it will be reduced to 4.5.
+*/
+
+
